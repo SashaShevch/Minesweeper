@@ -1,21 +1,54 @@
-'use strict'
+'use strict';
 
 let ctx = null;
+let canvas = null;
 
-let gameTime = 0,
-    lastFrameTime = 0;
-let currentSecond = 0,
-    frameCount = 0,
-    framesLastSecond = 0;
+let gameTime = 0;
+let lastFrameTime = 0;
 
-let offsetX = 0,
-    offsetY = 0;
+let currentSecond = 0;
+let frameCount = 0;
+let framesLastSecond = 0;
+
+let offsetX = 0;
+let offsetY = 0;
 let grid = [];
 
 let mouseState = {
     x: 0,
     y: 0,
     click: null
+};
+let position = {
+    difficulties: {
+        x: 150
+    },
+    bestTime: {
+        x: 150
+    },
+    backToMenu: {
+        x: 150,
+        y: 390
+    },
+    diffLevel: {
+        x: 150,
+        y: 20
+    },
+    mines: {
+        x: 10,
+        y: 40
+    },
+    time: {
+        x: 290,
+        y: 40
+    },
+    endGame: {
+        x: 150
+    },
+    frames: {
+        x: 5,
+        y: 15
+    }
 };
 let gameState = {
     difficulty: 'easy',
@@ -65,7 +98,7 @@ Tile.prototype.calcDanger = function () {
 
     for (let py = this.y - 1; py <= this.y + 1; py++) {
         for (let px = this.x - 1; px <= this.x + 1; px++) {
-            if (px == this.x && py == this.y) {
+            if (px === this.x && py === this.y) {
                 continue;
             }
 
@@ -82,14 +115,14 @@ Tile.prototype.calcDanger = function () {
     }
 };
 Tile.prototype.flag = function () {
-    if (this.currentState == 'hidden') {
+    if (this.currentState === 'hidden') {
         this.currentState = 'flagged';
-    } else if (this.currentState == 'flagged') {
+    } else if (this.currentState === 'flagged') {
         this.currentState = 'hidden';
     }
 };
 Tile.prototype.click = function () {
-    if (this.currentState != 'hidden') {
+    if (this.currentState !== 'hidden') {
         return;
     }
 
@@ -105,14 +138,14 @@ Tile.prototype.click = function () {
     checkState();
 };
 Tile.prototype.doubleClick = function () {
-    if (this.currentState != 'visible') {
+    if (this.currentState !== 'visible') {
         return;
     }
     let cDiff = difficulties[gameState.difficulty];
     let counter = 0;
     for (let py = this.y - 1; py <= this.y + 1; py++) {
         for (let px = this.x - 1; px <= this.x + 1; px++) {
-            if (px == this.x && py == this.y) {
+            if (px === this.x && py === this.y) {
                 continue;
             }
 
@@ -123,23 +156,19 @@ Tile.prototype.doubleClick = function () {
             }
 
             let idx = ((py * cDiff.width) + px);
-
-            if (grid[idx].currentState == 'flagged') {
+            if (grid[idx].currentState === 'flagged') {
                 counter += 1;
             }
         }
     }
 
-    if (counter != this.danger) {
-        //console.log(counter);
+    if (counter !== this.danger) {
         return;
     }
 
-
-    //console.log(counter);
     for (let py = this.y - 1; py <= this.y + 1; py++) {
         for (let px = this.x - 1; px <= this.x + 1; px++) {
-            if (px == this.x && py == this.y) {
+            if (px === this.x && py === this.y) {
                 continue;
             }
 
@@ -150,23 +179,19 @@ Tile.prototype.doubleClick = function () {
             }
 
             let idx = ((py * cDiff.width) + px);
-
-            if (grid[idx].currentState != 'hidden') {
+            if (grid[idx].currentState !== 'hidden') {
                 continue;
             }
-
             grid[idx].click();
         }
-
     }
-
 }
 Tile.prototype.revealNeighbours = function () {
     let cDiff = difficulties[gameState.difficulty];
 
     for (let py = this.y - 1; py <= this.y + 1; py++) {
         for (let px = this.x - 1; px <= this.x + 1; px++) {
-            if (px == this.x && py == this.y) {
+            if (px === this.x && py === this.y) {
                 continue;
             }
 
@@ -177,11 +202,10 @@ Tile.prototype.revealNeighbours = function () {
             }
 
             let idx = ((py * cDiff.width) + px);
-
-            if (grid[idx].currentState == 'hidden') {
+            if (grid[idx].currentState === 'hidden') {
                 grid[idx].currentState = 'visible';
 
-                if (grid[idx].danger == 0) {
+                if (grid[idx].danger === 0) {
                     grid[idx].revealNeighbours();
                 }
             }
@@ -191,7 +215,7 @@ Tile.prototype.revealNeighbours = function () {
 
 function checkState() {
     for (let i in grid) {
-        if (grid[i].hasMine == false && grid[i].currentState != 'visible') {
+        if (grid[i].hasMine === false && grid[i].currentState !== 'visible') {
             return;
         }
     }
@@ -199,12 +223,11 @@ function checkState() {
     gameState.timeTaken = gameTime;
     let cDiff = difficulties[gameState.difficulty];
 
-    if (cDiff.bestTime == 0 ||
+    if (cDiff.bestTime === 0 ||
         gameTime < cDiff.bestTime) {
         gameState.newBest = true;
         cDiff.bestTime = gameTime;
     }
-
     gameState.screen = 'won';
 }
 
@@ -221,25 +244,32 @@ function startLevel(diff) {
     gameTime = 0;
     lastFrameTime = 0;
 
-    grid.length = 0;
+    grid = [];
 
     let cDiff = difficulties[diff];
 
-    offsetX = Math.floor((document.getElementById('game').width -
+    offsetX = Math.floor((canvas.width -
         (cDiff.width * gameState.tileW)) / 2);
 
-    offsetY = Math.floor((document.getElementById('game').height -
+    offsetY = Math.floor((canvas.height -
         (cDiff.height * gameState.tileH)) / 2);
 
     for (let py = 0; py < cDiff.height; py++) {
         for (let px = 0; px < cDiff.width; px++) {
-
             grid.push(new Tile(px, py));
         }
     }
 
-    let minesPlaced = 0;
+    addMines(diff);
 
+    for (let i in grid) {
+        grid[i].calcDanger();
+    }
+}
+
+function addMines(diff) {
+    let minesPlaced = 0;
+    let cDiff = difficulties[diff];
     while (minesPlaced < cDiff.mines) {
         let idx = Math.floor(Math.random() * grid.length);
 
@@ -250,15 +280,11 @@ function startLevel(diff) {
         grid[idx].hasMine = true;
         minesPlaced++;
     }
-
-    for (let i in grid) {
-        grid[i].calcDanger();
-    }
 }
 
 function updateGame() {
-    if (gameState.screen == 'menu') {
-        if (mouseState.click != null) {
+    if (gameState.screen === 'menu') {
+        if (mouseState.click !== null) {
             for (let i in difficulties) {
                 if (mouseState.y >= difficulties[i].menuBox[0] &&
                     mouseState.y <= difficulties[i].menuBox[1]) {
@@ -268,60 +294,65 @@ function updateGame() {
             }
             mouseState.click = null;
         }
-    } else if (gameState.screen == 'won' || gameState.screen == 'lost') {
-        if (mouseState.click != null) {
+    } else if (gameState.screen === 'won' || gameState.screen === 'lost') {
+        if (mouseState.click !== null) {
             gameState.screen = 'menu';
             mouseState.click = null;
         }
     } else {
-        if (mouseState.click != null) {
-            let cDiff = difficulties[gameState.difficulty];
+        gameClickPosition();
+    }
+}
 
-            if (mouseState.click[0] >= offsetX &&
-                mouseState.click[1] >= offsetY &&
-                mouseState.click[0] < (offsetX + (cDiff.width * gameState.tileW)) &&
-                mouseState.click[1] < (offsetY + (cDiff.height * gameState.tileH))) {
-                let tile = [
-                    Math.floor((mouseState.click[0] - offsetX) / gameState.tileW),
-                    Math.floor((mouseState.click[1] - offsetY) / gameState.tileH)
-                ];
+function gameClickPosition() {
+    if (mouseState.click !== null) {
+        let cDiff = difficulties[gameState.difficulty];
 
-                if (mouseState.click[2] == 1) {
-                    grid[((tile[1] * cDiff.width) + tile[0])].click();
-                } else if (mouseState.click[2] == 2) {
-                    grid[((tile[1] * cDiff.width) + tile[0])].flag();
-                } else {
-                    grid[((tile[1] * cDiff.width) + tile[0])].doubleClick();
-                }
-            } else if (mouseState.click[1] >= 380) {
-                gameState.screen = 'menu';
+        if (mouseState.click[0] >= offsetX &&
+            mouseState.click[1] >= offsetY &&
+            mouseState.click[0] < (offsetX + (cDiff.width * gameState.tileW)) &&
+            mouseState.click[1] < (offsetY + (cDiff.height * gameState.tileH))) {
+            let tile = [
+                Math.floor((mouseState.click[0] - offsetX) / gameState.tileW),
+                Math.floor((mouseState.click[1] - offsetY) / gameState.tileH)
+            ];
+
+            if (mouseState.click[2] === 1) {
+                grid[((tile[1] * cDiff.width) + tile[0])].click();
+            } else if (mouseState.click[2] === 2) {
+                grid[((tile[1] * cDiff.width) + tile[0])].flag();
+            } else {
+                grid[((tile[1] * cDiff.width) + tile[0])].doubleClick();
             }
-
-            mouseState.click = null;
+        } else if (mouseState.click[1] >= position.backToMenu.y - 10) {
+            gameState.screen = 'menu';
         }
+
+        mouseState.click = null;
     }
 }
 
 window.onload = function () {
-    ctx = document.getElementById('game').getContext('2d');
+    canvas = document.getElementById('game');
+    ctx = canvas.getContext('2d');
 
     // Event listeners
 
-    document.getElementById('game').addEventListener('click', (e) => {
+    canvas.addEventListener('click', (e) => {
         let pos = realPos(e.pageX, e.pageY);
         mouseState.click = [pos[0], pos[1], 1];
     });
-    document.getElementById('game').addEventListener('mousemove',
+    canvas.addEventListener('mousemove',
         (e) => {
             let pos = realPos(e.pageX, e.pageY);
             mouseState.x = pos[0];
             mouseState.y = pos[1];
         });
-    document.getElementById('game').addEventListener('dblclick', (e) => {
+    canvas.addEventListener('dblclick', (e) => {
         let pos = realPos(e.pageX, e.pageY);
         mouseState.click = [pos[0], pos[1], 3];
     });
-    document.getElementById('game').addEventListener('contextmenu',
+    canvas.addEventListener('contextmenu',
         (e) => {
             e.preventDefault();
             let pos = realPos(e.pageX, e.pageY);
@@ -333,6 +364,9 @@ window.onload = function () {
 };
 
 function drawMenu() {
+    let diffPos = position.difficulties;
+    let bestTimePos = position.bestTime;
+
     ctx.textAlign = 'center';
     ctx.font = "bold 20pt sans-serif";
     ctx.fillStyle = "#000000";
@@ -347,7 +381,7 @@ function drawMenu() {
         }
 
         difficulties[d].menuBox = [y - 20, y + 10];
-        ctx.fillText(difficulties[d].name, 150, y);
+        ctx.fillText(difficulties[d].name, diffPos.x, y);
         y += 80;
 
         if (mouseOver) {
@@ -359,45 +393,52 @@ function drawMenu() {
     ctx.font = "italic 12pt sans-serif";
 
     for (let d in difficulties) {
-        if (difficulties[d].bestTime == 0) {
-            ctx.fillText("No best time", 150, y);
+        if (difficulties[d].bestTime === 0) {
+            ctx.fillText("No best time", bestTimePos.x, y);
         } else {
             let t = difficulties[d].bestTime;
             let bestTime = "";
+            //Defined best time
             if ((t / 1000) >= 60) {
                 bestTime = Math.floor((t / 1000) / 60) + ":";
                 t = t % (60000);
             }
             bestTime += Math.floor(t / 1000) +
                 "." + (t % 1000);
-            ctx.fillText("Best time   " + bestTime, 150, y);
+            ctx.fillText("Best time   " + bestTime, bestTimePos.x, y);
         }
         y += 80;
     }
 }
 
 function drawPlaying() {
-    let halfW = gameState.tileW / 2;
-    let halfH = gameState.tileH / 2;
+    drawScreen();
+    drawGrid();
+}
 
+function drawScreen() {
     let cDiff = difficulties[gameState.difficulty];
-
+    let diffLevel = position.diffLevel;
+    let menuBox = position.backToMenu;
+    let minesCount = position.mines;
+    let time = position.time;
+    let endGame = position.endGame;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-
     ctx.fillStyle = "#000000";
     ctx.font = "12px sans-serif";
-    ctx.fillText(cDiff.name, 150, 20);
+    ctx.fillText(cDiff.name, diffLevel.x, diffLevel.y);
+    ctx.fillText("Return to menu", menuBox.x, menuBox.y);
 
-    ctx.fillText("Return to menu", 150, 390);
-
-    if (gameState.screen != 'lost') {
+    if (gameState.screen !== 'lost') {
         ctx.textAlign = "left";
-        ctx.fillText("Mines: " + cDiff.mines, 10, 40);
+        ctx.fillText("Mines: " + cDiff.mines, minesCount.x, minesCount.y);
 
-        let whichT = (gameState.screen == 'won' ?
+        let whichT = (gameState.screen === 'won' ?
             gameState.timeTaken : gameTime);
         let t = '';
+
+        //defend the passage time
         if ((gameTime / 1000) > 60) {
             t = Math.floor((whichT / 1000) / 60) + ':';
         }
@@ -405,16 +446,23 @@ function drawPlaying() {
         t += (s > 9 ? s : '0' + s);
 
         ctx.textAlign = "right";
-        ctx.fillText("Time: " + t, 290, 40);
+        ctx.fillText("Time: " + t, time.x, time.y);
     }
 
-    if (gameState.screen == 'lost' || gameState.screen == 'won') {
+    if (gameState.screen === 'lost' || gameState.screen === 'won') {
         ctx.textAlign = "center";
         ctx.font = "bold 20px sans-serif";
         ctx.fillText(
-            (gameState.screen == 'lost' ?
-                "Game Over" : "Cleared!"), 150, offsetY - 15);
+            (gameState.screen === 'lost' ?
+                "Game Over" : "Cleared!"), endGame.x, offsetY - 15);
     }
+}
+
+function drawGrid() {
+    let halfW = gameState.tileW / 2;
+    let halfH = gameState.tileH / 2;
+
+    let cDiff = difficulties[gameState.difficulty];
 
     ctx.strokeStyle = "#999999";
     ctx.strokeRect(offsetX, offsetY,
@@ -429,13 +477,13 @@ function drawPlaying() {
         let px = offsetX + (grid[i].x * gameState.tileW);
         let py = offsetY + (grid[i].y * gameState.tileH);
 
-        if (gameState.screen == 'lost' && grid[i].hasMine) {
+        if (gameState.screen === 'lost' && grid[i].hasMine) {
             ctx.fillStyle = "#ff0000";
             ctx.fillRect(px, py,
                 gameState.tileW, gameState.tileH);
             ctx.fillStyle = "#000000";
             ctx.fillText("x", px + halfW, py + halfH);
-        } else if (grid[i].currentState == 'visible') {
+        } else if (grid[i].currentState === 'visible') {
             ctx.fillStyle = "#dddddd";
 
             if (grid[i].danger) {
@@ -449,7 +497,7 @@ function drawPlaying() {
             ctx.strokeRect(px, py,
                 gameState.tileW, gameState.tileH);
 
-            if (grid[i].currentState == 'flagged') {
+            if (grid[i].currentState === 'flagged') {
                 ctx.fillStyle = "#0000cc";
                 ctx.fillText("💣", px + halfW, py + halfH);
             }
@@ -458,13 +506,12 @@ function drawPlaying() {
 }
 
 function drawGame() {
-    if (ctx == null) {
+    if (ctx === null) {
         return;
     }
-
     // Frame & update related timing
     let currentFrameTime = Date.now();
-    if (lastFrameTime == 0) {
+    if (lastFrameTime === 0) {
         lastFrameTime = currentFrameTime;
     }
     let timeElapsed = currentFrameTime - lastFrameTime;
@@ -475,7 +522,7 @@ function drawGame() {
 
     // Frame counting
     let sec = Math.floor(Date.now() / 1000);
-    if (sec != currentSecond) {
+    if (sec !== currentSecond) {
         currentSecond = sec;
         framesLastSecond = frameCount;
         frameCount = 1;
@@ -487,7 +534,7 @@ function drawGame() {
     ctx.fillStyle = "#ddddee";
     ctx.fillRect(0, 0, 300, 400);
 
-    if (gameState.screen == 'menu') {
+    if (gameState.screen === 'menu') {
         drawMenu();
     } else {
         drawPlaying();
@@ -497,7 +544,7 @@ function drawGame() {
     ctx.textAlign = "left";
     ctx.font = "10pt sans-serif";
     ctx.fillStyle = "#000000";
-    ctx.fillText("Frames: " + framesLastSecond, 5, 15);
+    ctx.fillText("Frames: " + framesLastSecond, position.frames.x, position.frames.y);
 
     // Update the lastFrameTime
     lastFrameTime = currentFrameTime;
@@ -507,14 +554,14 @@ function drawGame() {
 }
 
 function realPos(x, y) {
-    let p = document.getElementById('game');
+    let p = canvas;
 
     do {
         x -= p.offsetLeft;
         y -= p.offsetTop;
 
         p = p.offsetParent;
-    } while (p != null);
+    } while (p !== null);
 
     return [x, y];
 }
